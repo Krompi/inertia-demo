@@ -1,0 +1,71 @@
+version: "3.7"
+networks:
+    default:
+        external:
+            name: proxy
+    intern: {}
+volumes:
+    app: {}
+    db: {}
+services:
+    comics-app:
+        image: krompi/comics-base:latest
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - source: app
+              target: /var/www
+              type: volume
+        networks:
+            default: {}
+            intern:
+                aliases:
+                    - app
+        depends_on:
+            - comics-mysql
+
+    comics-mysql:
+        image: mysql:5.7
+        restart: unless-stopped
+        environment:
+            - SERVICE_TAGS=dev
+            - SERVICE_NAME=mysql
+            - MYSQL_DATABASE
+            - MYSQL_USER
+            - MYSQL_PASSWORD
+            - MYSQL_ROOT_PASSWORD
+        volumes:
+            - ./db/mysql:/docker-entrypoint-initdb.d
+            - db:/var/lib/mysql
+        networks:
+            default: {}
+            intern:
+                aliases:
+                    - mysql
+
+    comics-www:
+        image: nginx:alpine
+        restart: unless-stopped
+        volumes:
+            - source: app
+              target: /var/www
+              type: volume
+            - source: ./conf/nginx
+              target: /etc/nginx/conf.d/
+              type: bind
+        networks:
+            default: {}
+            intern:
+                aliases:
+                    - www
+        labels:
+            - "traefik.enable=true"
+            - "traefik.frontend.priority=50"
+            - "traefik.port=80"
+            - "traefik.frontend.rule=HostRegexp: ${docker_project}.{domain:.+}"
+            - "traefik.docker.network=proxy"
+            # Traefik v2
+            - "traefik.http.routers.${docker_project}.rule=Host(`${docker_project}.app.loc`)"
+            - "traefik.http.routers.${docker_project}.entrypoints=http"
+        depends_on:
+            - comics-app

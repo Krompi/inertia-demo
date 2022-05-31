@@ -1,0 +1,41 @@
+FROM krompi/comics-base:latest
+
+# Variablen, können in docker-compose.yml überschrieben werden
+# User
+ARG USER="www-run"
+ARG GROUP="www-data"
+ARG UID="1000"
+ENV USER=${USER}
+ENV GROUP=${GROUP}
+# Proxy
+ARG http_proxy="http://10.167.16.21:80"
+ARG https_proxy="http://10.167.16.21:80"
+ARG no_proxy="localhost, *.bvv.bayern.de, *.blva.bayern.de, *.lvg.bayern.de, *.bybn"
+ENV http_proxy=${http_proxy}
+ENV https_proxy=${https_proxy}
+ENV no_proxy=${no_proxy}
+
+USER root
+
+# CA des Proxys ergänzen
+COPY ./conf/bayernwebgatwayca.crt /usr/local/share/ca-certificates/bayernwebgatewayca.crt
+COPY ./conf/bayern-root-ca-2019.crt /usr/local/share/ca-certificates/bayern-root-ca-2019.crt
+RUN update-ca-certificates
+
+# Daten in das Image kopieren
+COPY --chown=${USER}:${GROUP} ./www /var/www
+COPY --chown=${USER}:${GROUP} ./.env /var/www/.env
+RUN chmod -R 775 /var/www 
+
+# Arbeitsverzeichnis setzen
+WORKDIR /var/www
+
+# zum Standard-Benutzer wechseln
+USER ${USER}
+
+# Laravel einrichten
+RUN composer update
+RUN php artisan key:generate
+RUN php artisan storage:link
+RUN npm config set strict-ssl false
+RUN npm update && npm run prod
