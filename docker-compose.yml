@@ -8,7 +8,7 @@ volumes:
     app: {}
     db: {}
 services:
-    comics-app:
+    inertia-demo-app:
         image: krompi/comics-base:latest
         restart: unless-stopped
         working_dir: /var/www/
@@ -22,9 +22,9 @@ services:
                 aliases:
                     - app
         depends_on:
-            - comics-mysql
+            - inertia-demo-mysql
 
-    comics-mysql:
+    inertia-demo-mysql:
         image: mysql:5.7
         restart: unless-stopped
         environment:
@@ -43,7 +43,7 @@ services:
                 aliases:
                     - mysql
 
-    comics-www:
+    inertia-demo-www:
         image: nginx:alpine
         restart: unless-stopped
         volumes:
@@ -68,4 +68,4 @@ services:
             - "traefik.http.routers.${docker_project}.rule=Host(`${docker_project}.app.loc`)"
             - "traefik.http.routers.${docker_project}.entrypoints=http"
         depends_on:
-            - comics-app
+            - inertia-demo-app

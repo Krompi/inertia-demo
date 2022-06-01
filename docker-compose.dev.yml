@@ -1,34 +1,55 @@
 version: "3.7"
+volumes:
+  app:
+    driver_opts:
+      type: none
+      device: ${PWD}/www
+      o: bind,uid=1000,gid=1000
 services:
-  comics-app:
-      volumes:
-        - source: ./www
-          target: /var/www
-          type: bind
-        - source: .env
-          target: /var/www/.env
-          type: bind
-  comics-www:
-      volumes:
-        - source: ./www
-          target: /var/www
-          type: bind
-  comics-adminer:
-      image: adminer
-      restart: unless-stopped
-      labels:
-          - "traefik.enable=true"
-          - "traefik.frontend.priority=50"
-          - "traefik.docker.network=proxy"
-          - "traefik.port=8080"
-          - "traefik.frontend.rule=HostRegexp: ${docker_project}-adminer.{domain:.+}"
-          # Traefik v2
-          - "traefik.http.routers.${docker_project}-adminer.rule=Host(`${docker_project}-adminer.app.loc`)"
-          - "traefik.http.routers.${docker_project}-adminer.entrypoints=http"
-      networks:
-          default: {}
-          intern:
-              aliases:
-                  - adminer
-      depends_on:
-          - comics-mysql
+  inertia-demo-app:
+    build:
+      args:
+        - USER=www-run
+        - UID=1000
+        - GROUP=www-data
+        - http_proxy=http://10.167.16.21:80 # kommt aus der .env (sollte es, tut es aber nicht...)
+        - https_proxy=http://10.167.16.21:80 # kommt aus der .env (sollte es, tut es aber nicht...)
+        - no_proxy # kommt aus der .env
+      context: ./
+      dockerfile: Dockerfile
+    image: ${docker_image} # kommt aus der .env
+    environment:
+      - http_proxy
+      - https_proxy
+      - no_proxy
+    volumes:
+      # - source: ./www
+      #   target: /var/www
+      #   type: bind
+      - source: .env
+        target: /var/www/.env
+        type: bind
+  inertia-demo-www:
+    volumes:
+      - source: ./www
+        target: /var/www
+        type: bind
+  inertia-demo-adminer:
+    image: adminer
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.priority=50"
+      - "traefik.docker.network=proxy"
+      - "traefik.port=8080"
+      - "traefik.frontend.rule=HostRegexp: ${docker_project}-adminer.{domain:.+}"
+      # Traefik v2
+      - "traefik.http.routers.${docker_project}-adminer.rule=Host(`${docker_project}-adminer.app.loc`)"
+      - "traefik.http.routers.${docker_project}-adminer.entrypoints=http"
+    networks:
+      default: {}
+      intern:
+        aliases:
+          - adminer
+    depends_on:
+      - inertia-demo-mysql
