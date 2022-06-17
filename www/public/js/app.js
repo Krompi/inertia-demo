@@ -19783,7 +19783,7 @@ var _hoisted_1 = {
   "class": "bg-gray-200 p-6"
 };
 var _hoisted_2 = {
-  "class": "flex"
+  "class": "flex justify-between"
 };
 
 var _hoisted_3 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h1", {

@@ -1,6 +1,6 @@
 <template>
   <section class="bg-gray-200 p-6">
-    <header class="flex">
+    <header class="flex justify-between">
       <h1 class="font-bold text-lg">My App</h1>
       <Nav />
     </header>
